@@ -1,44 +1,38 @@
-from flask import Flask, request, jsonify
-import joblib
+from flask import Flask, render_template, request
 import numpy as np
+import joblib
 from sklearn.preprocessing import LabelEncoder
 
+# Initialize Flask app
 app = Flask(__name__)
 
-# Load the trained model
+# Load the pre-trained model and the encoder
 model = joblib.load('salary_predictor_with_field.pkl')
+encoder = joblib.load('field_encoder.pkl')
 
-# Setup field encoding (very important: same as training)
-fields_list = [
-    'Data Science / AI / ML',
-    'Software Engineering',
-    'Marketing',
-    'Finance',
-    'Mechanical Engineering'
-]
-encoder = LabelEncoder()
-encoder.fit(fields_list)
-
+# Route for the homepage (Input Form)
 @app.route('/')
 def home():
-    return "Salary Prediction API is running!"
+    return render_template('index.html')
 
+# Route to handle prediction
 @app.route('/predict', methods=['POST'])
-def predict_salary():
-    data = request.get_json()
-
-    # Read input
-    years_experience = data['years_experience']
-    field = data['field']
-
-    # Encode field
+def predict():
+    # Get input from the form
+    years_experience = float(request.form['years_experience'])
+    field = request.form['field']
+    
+    # Encode the field to match the model's training
     field_encoded = encoder.transform([field])[0]
+    
+    # Prepare input data for prediction
     input_data = np.array([[years_experience, field_encoded]])
-
-    # Predict
-    prediction = model.predict(input_data)
-
-    return jsonify({'predicted_salary': float(prediction[0])})
+    
+    # Make prediction
+    predicted_salary = model.predict(input_data)[0]
+    
+    # Return result to the frontend
+    return render_template('index.html', prediction_text=f"Predicted Salary: ₹{predicted_salary:,.2f}")
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    app.run(debug=True)
