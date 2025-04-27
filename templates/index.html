@@ -6,6 +6,7 @@
     <title>Salary Predictor</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+        /* Your same beautiful CSS here */
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f4f4f4;
@@ -69,7 +70,8 @@
 
 <div class="container">
     <h1>Salary Predictor</h1>
-    <form action="/predict" method="POST">
+    
+    <form id="prediction-form">
         <label for="years_experience">Years of Experience:</label>
         <input type="number" id="years_experience" name="years_experience" required step="0.1" min="0" placeholder="Enter your years of experience">
 
@@ -85,10 +87,41 @@
         <button type="submit">Predict Salary</button>
     </form>
 
-    {% if prediction_text %}
-        <div class="result">{{ prediction_text }}</div>
-    {% endif %}
+    <div class="result" id="prediction-result"></div>
 </div>
+
+<script>
+    const form = document.getElementById('prediction-form');
+    const resultDiv = document.getElementById('prediction-result');
+
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault(); // Stop normal form submission
+
+        const years_experience = document.getElementById('years_experience').value;
+        const field = document.getElementById('field').value;
+
+        // Make API call
+        try {
+            const response = await fetch('http://http://3.87.40.51:5000/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ years_experience, field })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                resultDiv.innerText = `Predicted Salary: ₹${data.predicted_salary.toLocaleString()}`;
+            } else {
+                resultDiv.innerText = `Error: ${data.error}`;
+            }
+        } catch (error) {
+            resultDiv.innerText = `Error: ${error.message}`;
+        }
+    });
+</script>
 
 </body>
 </html>
